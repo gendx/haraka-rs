@@ -1,15 +1,9 @@
-use u64x2;
+use u64x2::u64x2;
 use intrinsics;
 use constants;
 
 #[inline(always)]
-fn aes4(
-    s0: &mut u64x2::u64x2,
-    s1: &mut u64x2::u64x2,
-    s2: &mut u64x2::u64x2,
-    s3: &mut u64x2::u64x2,
-    rci: usize,
-) {
+fn aes4(s0: &mut u64x2, s1: &mut u64x2, s2: &mut u64x2, s3: &mut u64x2, rci: usize) {
     intrinsics::aesenc(s0, &constants::HARAKA_CONSTANTS[rci]);
     intrinsics::aesenc(s1, &constants::HARAKA_CONSTANTS[rci + 1]);
     intrinsics::aesenc(s2, &constants::HARAKA_CONSTANTS[rci + 2]);
@@ -21,12 +15,7 @@ fn aes4(
 }
 
 #[inline(always)]
-fn mix4(
-    s0: &mut u64x2::u64x2,
-    s1: &mut u64x2::u64x2,
-    s2: &mut u64x2::u64x2,
-    s3: &mut u64x2::u64x2,
-) {
+fn mix4(s0: &mut u64x2, s1: &mut u64x2, s2: &mut u64x2, s3: &mut u64x2) {
     let mut tmp = *s0;
     intrinsics::unpacklo_epi32(&mut tmp, s1);
     intrinsics::unpackhi_epi32(s0, s1);
@@ -43,25 +32,13 @@ fn mix4(
 }
 
 #[inline(always)]
-fn aes_mix4(
-    s0: &mut u64x2::u64x2,
-    s1: &mut u64x2::u64x2,
-    s2: &mut u64x2::u64x2,
-    s3: &mut u64x2::u64x2,
-    rci: usize,
-) {
+fn aes_mix4(s0: &mut u64x2, s1: &mut u64x2, s2: &mut u64x2, s3: &mut u64x2, rci: usize) {
     aes4(s0, s1, s2, s3, rci);
     mix4(s0, s1, s2, s3);
 }
 
 #[inline(always)]
-fn truncstore(
-    dst: &mut [u8; 32],
-    s0: &u64x2::u64x2,
-    s1: &u64x2::u64x2,
-    s2: &u64x2::u64x2,
-    s3: &u64x2::u64x2,
-) {
+fn truncstore(dst: &mut [u8; 32], s0: &u64x2, s1: &u64x2, s2: &u64x2, s3: &u64x2) {
     // TODO: optimize this
     dst[0] = s0.1 as u8;
     dst[1] = (s0.1 >> 8) as u8;
@@ -102,19 +79,19 @@ fn truncstore(
 
 // TODO: parametrize by number of rounds when supported by Rust
 pub fn haraka512_5round(dst: &mut [u8; 32], src: &[u8; 64]) {
-    let mut s0 = u64x2::u64x2::read(array_ref![src, 0, 16]);
-    let mut s1 = u64x2::u64x2::read(array_ref![src, 16, 16]);
-    let mut s2 = u64x2::u64x2::read(array_ref![src, 32, 16]);
-    let mut s3 = u64x2::u64x2::read(array_ref![src, 48, 16]);
+    let mut s0 = u64x2::read(array_ref![src, 0, 16]);
+    let mut s1 = u64x2::read(array_ref![src, 16, 16]);
+    let mut s2 = u64x2::read(array_ref![src, 32, 16]);
+    let mut s3 = u64x2::read(array_ref![src, 48, 16]);
 
     for i in 0..5 {
         aes_mix4(&mut s0, &mut s1, &mut s2, &mut s3, 8 * i);
     }
 
-    let t0 = u64x2::u64x2::read(array_ref![src, 0, 16]);
-    let t1 = u64x2::u64x2::read(array_ref![src, 16, 16]);
-    let t2 = u64x2::u64x2::read(array_ref![src, 32, 16]);
-    let t3 = u64x2::u64x2::read(array_ref![src, 48, 16]);
+    let t0 = u64x2::read(array_ref![src, 0, 16]);
+    let t1 = u64x2::read(array_ref![src, 16, 16]);
+    let t2 = u64x2::read(array_ref![src, 32, 16]);
+    let t3 = u64x2::read(array_ref![src, 48, 16]);
     intrinsics::pxor(&mut s0, &t0);
     intrinsics::pxor(&mut s1, &t1);
     intrinsics::pxor(&mut s2, &t2);
@@ -124,19 +101,19 @@ pub fn haraka512_5round(dst: &mut [u8; 32], src: &[u8; 64]) {
 }
 
 pub fn haraka512_6round(dst: &mut [u8; 32], src: &[u8; 64]) {
-    let mut s0 = u64x2::u64x2::read(array_ref![src, 0, 16]);
-    let mut s1 = u64x2::u64x2::read(array_ref![src, 16, 16]);
-    let mut s2 = u64x2::u64x2::read(array_ref![src, 32, 16]);
-    let mut s3 = u64x2::u64x2::read(array_ref![src, 48, 16]);
+    let mut s0 = u64x2::read(array_ref![src, 0, 16]);
+    let mut s1 = u64x2::read(array_ref![src, 16, 16]);
+    let mut s2 = u64x2::read(array_ref![src, 32, 16]);
+    let mut s3 = u64x2::read(array_ref![src, 48, 16]);
 
     for i in 0..6 {
         aes_mix4(&mut s0, &mut s1, &mut s2, &mut s3, 8 * i);
     }
 
-    let t0 = u64x2::u64x2::read(array_ref![src, 0, 16]);
-    let t1 = u64x2::u64x2::read(array_ref![src, 16, 16]);
-    let t2 = u64x2::u64x2::read(array_ref![src, 32, 16]);
-    let t3 = u64x2::u64x2::read(array_ref![src, 48, 16]);
+    let t0 = u64x2::read(array_ref![src, 0, 16]);
+    let t1 = u64x2::read(array_ref![src, 16, 16]);
+    let t2 = u64x2::read(array_ref![src, 32, 16]);
+    let t3 = u64x2::read(array_ref![src, 48, 16]);
     intrinsics::pxor(&mut s0, &t0);
     intrinsics::pxor(&mut s1, &t1);
     intrinsics::pxor(&mut s2, &t2);
@@ -151,10 +128,10 @@ mod tests {
     use super::*;
 
     fn mix4_slice(s0: &mut [u8; 16], s1: &mut [u8; 16], s2: &mut [u8; 16], s3: &mut [u8; 16]) {
-        let mut s0_xmm = u64x2::u64x2::read(s0);
-        let mut s1_xmm = u64x2::u64x2::read(s1);
-        let mut s2_xmm = u64x2::u64x2::read(s2);
-        let mut s3_xmm = u64x2::u64x2::read(s3);
+        let mut s0_xmm = u64x2::read(s0);
+        let mut s1_xmm = u64x2::read(s1);
+        let mut s2_xmm = u64x2::read(s2);
+        let mut s3_xmm = u64x2::read(s3);
         mix4(&mut s0_xmm, &mut s1_xmm, &mut s2_xmm, &mut s3_xmm);
         s0_xmm.write(s0);
         s1_xmm.write(s1);
@@ -248,10 +225,10 @@ mod tests {
     }
 
     fn aes4_slice(state: &mut [u8; 64], rci: usize) {
-        let mut s0_xmm = u64x2::u64x2::read(array_ref![state, 0, 16]);
-        let mut s1_xmm = u64x2::u64x2::read(array_ref![state, 16, 16]);
-        let mut s2_xmm = u64x2::u64x2::read(array_ref![state, 32, 16]);
-        let mut s3_xmm = u64x2::u64x2::read(array_ref![state, 48, 16]);
+        let mut s0_xmm = u64x2::read(array_ref![state, 0, 16]);
+        let mut s1_xmm = u64x2::read(array_ref![state, 16, 16]);
+        let mut s2_xmm = u64x2::read(array_ref![state, 32, 16]);
+        let mut s3_xmm = u64x2::read(array_ref![state, 48, 16]);
         aes4(&mut s0_xmm, &mut s1_xmm, &mut s2_xmm, &mut s3_xmm, rci);
         s0_xmm.write(array_mut_ref![state, 0, 16]);
         s1_xmm.write(array_mut_ref![state, 16, 16]);
@@ -400,10 +377,10 @@ mod tests {
     }
 
     fn aes_mix4_slice(state: &mut [u8; 64], rci: usize) {
-        let mut s0_xmm = u64x2::u64x2::read(array_ref![state, 0, 16]);
-        let mut s1_xmm = u64x2::u64x2::read(array_ref![state, 16, 16]);
-        let mut s2_xmm = u64x2::u64x2::read(array_ref![state, 32, 16]);
-        let mut s3_xmm = u64x2::u64x2::read(array_ref![state, 48, 16]);
+        let mut s0_xmm = u64x2::read(array_ref![state, 0, 16]);
+        let mut s1_xmm = u64x2::read(array_ref![state, 16, 16]);
+        let mut s2_xmm = u64x2::read(array_ref![state, 32, 16]);
+        let mut s3_xmm = u64x2::read(array_ref![state, 48, 16]);
         aes_mix4(&mut s0_xmm, &mut s1_xmm, &mut s2_xmm, &mut s3_xmm, rci);
         s0_xmm.write(array_mut_ref![state, 0, 16]);
         s1_xmm.write(array_mut_ref![state, 16, 16]);
@@ -552,10 +529,10 @@ mod tests {
     }
 
     fn truncstore_slice(dst: &mut [u8; 32], state: &[u8; 64]) {
-        let s0_xmm = u64x2::u64x2::read(array_ref![state, 0, 16]);
-        let s1_xmm = u64x2::u64x2::read(array_ref![state, 16, 16]);
-        let s2_xmm = u64x2::u64x2::read(array_ref![state, 32, 16]);
-        let s3_xmm = u64x2::u64x2::read(array_ref![state, 48, 16]);
+        let s0_xmm = u64x2::read(array_ref![state, 0, 16]);
+        let s1_xmm = u64x2::read(array_ref![state, 16, 16]);
+        let s2_xmm = u64x2::read(array_ref![state, 32, 16]);
+        let s3_xmm = u64x2::read(array_ref![state, 48, 16]);
         truncstore(dst, &s0_xmm, &s1_xmm, &s2_xmm, &s3_xmm);
     }
 

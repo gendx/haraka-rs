@@ -1,7 +1,7 @@
-use u64x2;
+use u64x2::u64x2;
 
 #[inline(always)]
-pub(crate) fn aesenc(block: &mut u64x2::u64x2, key: &u64x2::u64x2) {
+pub(crate) fn aesenc(block: &mut u64x2, key: &u64x2) {
     unsafe {
         asm!("aesenc $0, $1"
             : "+x"(*block)
@@ -13,7 +13,7 @@ pub(crate) fn aesenc(block: &mut u64x2::u64x2, key: &u64x2::u64x2) {
 }
 
 #[inline(always)]
-pub(crate) fn pxor(dst: &mut u64x2::u64x2, src: &u64x2::u64x2) {
+pub(crate) fn pxor(dst: &mut u64x2, src: &u64x2) {
     unsafe {
         asm!("pxor $0, $1"
             : "+x"(*dst)
@@ -25,7 +25,7 @@ pub(crate) fn pxor(dst: &mut u64x2::u64x2, src: &u64x2::u64x2) {
 }
 
 #[inline(always)]
-pub(crate) fn unpacklo_epi32(dst: &mut u64x2::u64x2, src: &u64x2::u64x2) {
+pub(crate) fn unpacklo_epi32(dst: &mut u64x2, src: &u64x2) {
     unsafe {
         asm!("punpckldq $0, $1"
             : "+x"(*dst)
@@ -37,7 +37,7 @@ pub(crate) fn unpacklo_epi32(dst: &mut u64x2::u64x2, src: &u64x2::u64x2) {
 }
 
 #[inline(always)]
-pub(crate) fn unpackhi_epi32(dst: &mut u64x2::u64x2, src: &u64x2::u64x2) {
+pub(crate) fn unpackhi_epi32(dst: &mut u64x2, src: &u64x2) {
     unsafe {
         asm!("punpckhdq $0, $1"
             : "+x"(*dst)
@@ -54,8 +54,8 @@ mod tests {
     use super::*;
 
     fn aesenc_slice(block: &mut [u8; 16], key: &[u8; 16]) {
-        let mut block_xmm = u64x2::u64x2::read(block);
-        let key_xmm = u64x2::u64x2::read(key);
+        let mut block_xmm = u64x2::read(block);
+        let key_xmm = u64x2::read(key);
         aesenc(&mut block_xmm, &key_xmm);
         block_xmm.write(block);
     }
@@ -70,8 +70,8 @@ mod tests {
     }
 
     fn pxor_slice(dst: &mut [u8; 16], src: &[u8; 16]) {
-        let mut dst_xmm = u64x2::u64x2::read(dst);
-        let src_xmm = u64x2::u64x2::read(src);
+        let mut dst_xmm = u64x2::read(dst);
+        let src_xmm = u64x2::read(src);
         pxor(&mut dst_xmm, &src_xmm);
         dst_xmm.write(dst);
     }
@@ -86,8 +86,8 @@ mod tests {
     }
 
     fn unpacklo_epi32_slice(dst: &mut [u8; 16], src: &[u8; 16]) {
-        let mut dst_xmm = u64x2::u64x2::read(dst);
-        let src_xmm = u64x2::u64x2::read(src);
+        let mut dst_xmm = u64x2::read(dst);
+        let src_xmm = u64x2::read(src);
         unpacklo_epi32(&mut dst_xmm, &src_xmm);
         dst_xmm.write(dst);
     }
@@ -119,8 +119,8 @@ mod tests {
     }
 
     fn unpackhi_epi32_slice(dst: &mut [u8; 16], src: &[u8; 16]) {
-        let mut dst_xmm = u64x2::u64x2::read(dst);
-        let src_xmm = u64x2::u64x2::read(src);
+        let mut dst_xmm = u64x2::read(dst);
+        let src_xmm = u64x2::read(src);
         unpackhi_epi32(&mut dst_xmm, &src_xmm);
         dst_xmm.write(dst);
     }
