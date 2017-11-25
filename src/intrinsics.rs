@@ -3,9 +3,9 @@ use u64x2;
 #[inline(always)]
 pub(crate) fn aesenc(block: &mut u64x2::u64x2, key: &u64x2::u64x2) {
     unsafe {
-        asm!("aesenc xmm0, xmm1"
-            : "+{xmm0}"(*block)
-            : "{xmm1}"(*key)
+        asm!("aesenc $0, $1"
+            : "+x"(*block)
+            : "x"(*key)
             :
             : "intel", "alignstack"
         );
@@ -15,9 +15,9 @@ pub(crate) fn aesenc(block: &mut u64x2::u64x2, key: &u64x2::u64x2) {
 #[inline(always)]
 pub(crate) fn pxor(dst: &mut u64x2::u64x2, src: &u64x2::u64x2) {
     unsafe {
-        asm!("pxor xmm0, xmm1"
-            : "+{xmm0}"(*dst)
-            : "{xmm1}"(*src)
+        asm!("pxor $0, $1"
+            : "+x"(*dst)
+            : "x"(*src)
             :
             : "intel", "alignstack"
         );
@@ -27,9 +27,9 @@ pub(crate) fn pxor(dst: &mut u64x2::u64x2, src: &u64x2::u64x2) {
 #[inline(always)]
 pub(crate) fn unpacklo_epi32(dst: &mut u64x2::u64x2, src: &u64x2::u64x2) {
     unsafe {
-        asm!("punpckldq xmm0, xmm1"
-            : "+{xmm0}"(*dst)
-            : "{xmm1}"(*src)
+        asm!("punpckldq $0, $1"
+            : "+x"(*dst)
+            : "x"(*src)
             :
             : "intel", "alignstack"
         );
@@ -39,9 +39,9 @@ pub(crate) fn unpacklo_epi32(dst: &mut u64x2::u64x2, src: &u64x2::u64x2) {
 #[inline(always)]
 pub(crate) fn unpackhi_epi32(dst: &mut u64x2::u64x2, src: &u64x2::u64x2) {
     unsafe {
-        asm!("punpckhdq xmm0, xmm1"
-            : "+{xmm0}"(*dst)
-            : "{xmm1}"(*src)
+        asm!("punpckhdq $0, $1"
+            : "+x"(*dst)
+            : "x"(*src)
             :
             : "intel", "alignstack"
         );
