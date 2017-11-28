@@ -3,6 +3,7 @@
 
 #[macro_use]
 extern crate arrayref;
+extern crate byteorder;
 
 mod u64x2;
 mod intrinsics;

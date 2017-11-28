@@ -1,6 +1,7 @@
 use u64x2::u64x2;
 use intrinsics;
 use constants;
+use byteorder::{ByteOrder, LittleEndian};
 
 #[inline(always)]
 fn aes4(s0: &mut u64x2, s1: &mut u64x2, s2: &mut u64x2, s3: &mut u64x2, rci: usize) {
@@ -39,42 +40,11 @@ fn aes_mix4(s0: &mut u64x2, s1: &mut u64x2, s2: &mut u64x2, s3: &mut u64x2, rci:
 
 #[inline(always)]
 fn truncstore(dst: &mut [u8; 32], s0: &u64x2, s1: &u64x2, s2: &u64x2, s3: &u64x2) {
-    // TODO: optimize this
-    dst[0] = s0.1 as u8;
-    dst[1] = (s0.1 >> 8) as u8;
-    dst[2] = (s0.1 >> 16) as u8;
-    dst[3] = (s0.1 >> 24) as u8;
-    dst[4] = (s0.1 >> 32) as u8;
-    dst[5] = (s0.1 >> 40) as u8;
-    dst[6] = (s0.1 >> 48) as u8;
-    dst[7] = (s0.1 >> 56) as u8;
-
-    dst[8] = s1.1 as u8;
-    dst[9] = (s1.1 >> 8) as u8;
-    dst[10] = (s1.1 >> 16) as u8;
-    dst[11] = (s1.1 >> 24) as u8;
-    dst[12] = (s1.1 >> 32) as u8;
-    dst[13] = (s1.1 >> 40) as u8;
-    dst[14] = (s1.1 >> 48) as u8;
-    dst[15] = (s1.1 >> 56) as u8;
-
-    dst[16] = s2.0 as u8;
-    dst[17] = (s2.0 >> 8) as u8;
-    dst[18] = (s2.0 >> 16) as u8;
-    dst[19] = (s2.0 >> 24) as u8;
-    dst[20] = (s2.0 >> 32) as u8;
-    dst[21] = (s2.0 >> 40) as u8;
-    dst[22] = (s2.0 >> 48) as u8;
-    dst[23] = (s2.0 >> 56) as u8;
-
-    dst[24] = s3.0 as u8;
-    dst[25] = (s3.0 >> 8) as u8;
-    dst[26] = (s3.0 >> 16) as u8;
-    dst[27] = (s3.0 >> 24) as u8;
-    dst[28] = (s3.0 >> 32) as u8;
-    dst[29] = (s3.0 >> 40) as u8;
-    dst[30] = (s3.0 >> 48) as u8;
-    dst[31] = (s3.0 >> 56) as u8;
+    // TODO: optimize this more?
+    LittleEndian::write_u64(array_mut_ref![dst, 0, 8], s0.1);
+    LittleEndian::write_u64(array_mut_ref![dst, 8, 8], s1.1);
+    LittleEndian::write_u64(array_mut_ref![dst, 16, 8], s2.0);
+    LittleEndian::write_u64(array_mut_ref![dst, 24, 8], s3.0);
 }
 
 // TODO: parametrize by number of rounds when supported by Rust
