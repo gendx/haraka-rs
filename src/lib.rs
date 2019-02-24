@@ -5,11 +5,11 @@
 extern crate arrayref;
 extern crate byteorder;
 
-mod u64x2;
-mod intrinsics;
+mod constants;
 mod haraka256;
 mod haraka512;
-mod constants;
+mod intrinsics;
+mod u64x2;
 
 pub fn haraka256_5round(dst: &mut [u8; 32], src: &[u8; 32]) {
     haraka256::haraka256_5round(dst, src)
