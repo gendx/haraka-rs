@@ -1,10 +1,13 @@
 #![feature(asm)]
 #![feature(repr_simd)]
 #![feature(const_generics)]
+#![feature(test)]
 
 #[macro_use]
 extern crate arrayref;
 extern crate byteorder;
+#[cfg(test)]
+extern crate test;
 
 mod constants;
 mod haraka256;
