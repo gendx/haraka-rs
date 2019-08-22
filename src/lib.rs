@@ -1,5 +1,6 @@
 #![feature(asm)]
 #![feature(repr_simd)]
+#![feature(const_generics)]
 
 #[macro_use]
 extern crate arrayref;
@@ -11,18 +12,10 @@ mod haraka512;
 mod intrinsics;
 mod u64x2;
 
-pub fn haraka256_5round(dst: &mut [u8; 32], src: &[u8; 32]) {
-    haraka256::haraka256_5round(dst, src)
+pub fn haraka256<const N_ROUNDS: usize>(dst: &mut [u8; 32], src: &[u8; 32]) {
+    haraka256::haraka256::<{ N_ROUNDS }>(dst, src)
 }
 
-pub fn haraka512_5round(dst: &mut [u8; 32], src: &[u8; 64]) {
-    haraka512::haraka512_5round(dst, src)
-}
-
-pub fn haraka256_6round(dst: &mut [u8; 32], src: &[u8; 32]) {
-    haraka256::haraka256_6round(dst, src)
-}
-
-pub fn haraka512_6round(dst: &mut [u8; 32], src: &[u8; 64]) {
-    haraka512::haraka512_6round(dst, src)
+pub fn haraka512<const N_ROUNDS: usize>(dst: &mut [u8; 32], src: &[u8; 64]) {
+    haraka512::haraka512::<{ N_ROUNDS }>(dst, src)
 }

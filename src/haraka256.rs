@@ -24,29 +24,11 @@ fn aes_mix2(s0: &mut u64x2, s1: &mut u64x2, rci: usize) {
     mix2(s0, s1);
 }
 
-// TODO: parametrize by number of rounds when supported by Rust
-pub fn haraka256_5round(dst: &mut [u8; 32], src: &[u8; 32]) {
+pub fn haraka256<const N_ROUNDS: usize>(dst: &mut [u8; 32], src: &[u8; 32]) {
     let mut s0 = u64x2::read(array_ref![src, 0, 16]);
     let mut s1 = u64x2::read(array_ref![src, 16, 16]);
 
-    for i in 0..5 {
-        aes_mix2(&mut s0, &mut s1, 4 * i);
-    }
-
-    let t0 = u64x2::read(array_ref![src, 0, 16]);
-    let t1 = u64x2::read(array_ref![src, 16, 16]);
-    intrinsics::pxor(&mut s0, &t0);
-    intrinsics::pxor(&mut s1, &t1);
-
-    s0.write(array_mut_ref![dst, 0, 16]);
-    s1.write(array_mut_ref![dst, 16, 16]);
-}
-
-pub fn haraka256_6round(dst: &mut [u8; 32], src: &[u8; 32]) {
-    let mut s0 = u64x2::read(array_ref![src, 0, 16]);
-    let mut s1 = u64x2::read(array_ref![src, 16, 16]);
-
-    for i in 0..6 {
+    for i in 0..N_ROUNDS {
         aes_mix2(&mut s0, &mut s1, 4 * i);
     }
 
@@ -146,7 +128,7 @@ mod tests {
                        \x78\xd0\x54\x5f\xb7\x2b\xf7\x0c\
                        \x69\x5c\x2a\x09\x23\xcb\xd4\x7b\
                        \xba\x11\x59\xef\xbf\x2b\x2c\x1c";
-        haraka256_5round(&mut dst, &src);
+        haraka256::<5>(&mut dst, &src);
         assert_eq!(&dst, expect);
     }
 
@@ -161,7 +143,7 @@ mod tests {
                        \xff\xf8\xcc\xf4\x69\x03\xd1\xc8\
                        \x18\x4b\x40\x4c\xc8\x37\x35\x55\
                        \x1c\x80\xa7\x2b\x5f\xb3\x20\x45";
-        haraka256_6round(&mut dst, &src);
+        haraka256::<6>(&mut dst, &src);
         assert_eq!(&dst, expect);
     }
 }

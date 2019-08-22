@@ -47,36 +47,13 @@ fn truncstore(dst: &mut [u8; 32], s0: &u64x2, s1: &u64x2, s2: &u64x2, s3: &u64x2
     LittleEndian::write_u64(array_mut_ref![dst, 24, 8], s3.0);
 }
 
-// TODO: parametrize by number of rounds when supported by Rust
-pub fn haraka512_5round(dst: &mut [u8; 32], src: &[u8; 64]) {
+pub fn haraka512<const N_ROUNDS: usize>(dst: &mut [u8; 32], src: &[u8; 64]) {
     let mut s0 = u64x2::read(array_ref![src, 0, 16]);
     let mut s1 = u64x2::read(array_ref![src, 16, 16]);
     let mut s2 = u64x2::read(array_ref![src, 32, 16]);
     let mut s3 = u64x2::read(array_ref![src, 48, 16]);
 
-    for i in 0..5 {
-        aes_mix4(&mut s0, &mut s1, &mut s2, &mut s3, 8 * i);
-    }
-
-    let t0 = u64x2::read(array_ref![src, 0, 16]);
-    let t1 = u64x2::read(array_ref![src, 16, 16]);
-    let t2 = u64x2::read(array_ref![src, 32, 16]);
-    let t3 = u64x2::read(array_ref![src, 48, 16]);
-    intrinsics::pxor(&mut s0, &t0);
-    intrinsics::pxor(&mut s1, &t1);
-    intrinsics::pxor(&mut s2, &t2);
-    intrinsics::pxor(&mut s3, &t3);
-
-    truncstore(dst, &s0, &s1, &s2, &s3);
-}
-
-pub fn haraka512_6round(dst: &mut [u8; 32], src: &[u8; 64]) {
-    let mut s0 = u64x2::read(array_ref![src, 0, 16]);
-    let mut s1 = u64x2::read(array_ref![src, 16, 16]);
-    let mut s2 = u64x2::read(array_ref![src, 32, 16]);
-    let mut s3 = u64x2::read(array_ref![src, 48, 16]);
-
-    for i in 0..6 {
+    for i in 0..N_ROUNDS {
         aes_mix4(&mut s0, &mut s1, &mut s2, &mut s3, 8 * i);
     }
 
@@ -245,7 +222,7 @@ mod tests {
                        \x13\xb2\x92\x28\x7f\x30\x6f\x62\
                        \x5a\x6d\x57\x33\x1c\xae\x5f\x34\
                        \xdd\x92\x77\xb0\x94\x5b\xe2\xaa";
-        haraka512_5round(&mut dst, &src);
+        haraka512::<5>(&mut dst, &src);
         assert_eq!(&dst, expect);
     }
 
@@ -264,7 +241,7 @@ mod tests {
                        \x15\x3c\x9a\x54\x13\xfb\x1e\x98\
                        \x4a\x91\x4f\x5b\x6f\xea\x17\x22\
                        \x85\x41\xce\x17\x07\xfc\x4e\x64";
-        haraka512_6round(&mut dst, &src);
+        haraka512::<6>(&mut dst, &src);
         assert_eq!(&dst, expect);
     }
 }
