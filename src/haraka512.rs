@@ -1,7 +1,8 @@
+use crate::constants;
+use crate::intrinsics;
+use crate::u64x2::u64x2;
+use arrayref::{array_mut_ref, array_ref};
 use byteorder::{ByteOrder, LittleEndian};
-use constants;
-use intrinsics;
-use u64x2::u64x2;
 
 #[inline(always)]
 fn aes4(s0: &mut u64x2, s1: &mut u64x2, s2: &mut u64x2, s3: &mut u64x2, rci: usize) {

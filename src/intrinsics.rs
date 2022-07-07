@@ -1,13 +1,14 @@
-use u64x2::u64x2;
+use crate::u64x2::u64x2;
+use std::arch::asm;
 
 #[inline(always)]
 pub(crate) fn aesenc(block: &mut u64x2, key: &u64x2) {
     unsafe {
-        asm!("aesenc $0, $1"
-            : "+x"(*block)
-            : "x"(*key)
-            :
-            : "intel", "alignstack"
+        asm!(
+            "aesenc {0}, {1}",
+            inout(xmm_reg) *block,
+            in(xmm_reg) *key,
+            options(pure, nomem, nostack)
         );
     }
 }
@@ -15,11 +16,11 @@ pub(crate) fn aesenc(block: &mut u64x2, key: &u64x2) {
 #[inline(always)]
 pub(crate) fn pxor(dst: &mut u64x2, src: &u64x2) {
     unsafe {
-        asm!("pxor $0, $1"
-            : "+x"(*dst)
-            : "x"(*src)
-            :
-            : "intel", "alignstack"
+        asm!(
+            "pxor {0}, {1}",
+            inout(xmm_reg) *dst,
+            in(xmm_reg) *src,
+            options(pure, nomem, nostack)
         );
     }
 }
@@ -27,11 +28,11 @@ pub(crate) fn pxor(dst: &mut u64x2, src: &u64x2) {
 #[inline(always)]
 pub(crate) fn unpacklo_epi32(dst: &mut u64x2, src: &u64x2) {
     unsafe {
-        asm!("punpckldq $0, $1"
-            : "+x"(*dst)
-            : "x"(*src)
-            :
-            : "intel", "alignstack"
+        asm!(
+            "punpckldq {0}, {1}",
+            inout(xmm_reg) *dst,
+            in(xmm_reg) *src,
+            options(pure, nomem, nostack)
         );
     }
 }
@@ -39,11 +40,11 @@ pub(crate) fn unpacklo_epi32(dst: &mut u64x2, src: &u64x2) {
 #[inline(always)]
 pub(crate) fn unpackhi_epi32(dst: &mut u64x2, src: &u64x2) {
     unsafe {
-        asm!("punpckhdq $0, $1"
-            : "+x"(*dst)
-            : "x"(*src)
-            :
-            : "intel", "alignstack"
+        asm!(
+            "punpckhdq {0}, {1}",
+            inout(xmm_reg) *dst,
+            in(xmm_reg) *src,
+            options(pure, nomem, nostack)
         );
     }
 }
