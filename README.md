@@ -7,8 +7,7 @@ A Rust implementation of the [Haraka](https://github.com/kste/haraka) (v2) short
 
 ## Implementation
 
-As for the original Haraka implementation in C, this project relies on AES-NI instructions.
-Therefore, a nightly Rust compiler is required, due to `#![feature(asm)]`.
+As for the original Haraka implementation in C, this project relies on AES-NI instructions, which are available on the stable Rust compiler via [intrinsics](https://doc.rust-lang.org/core/arch/x86_64/fn._mm_aesenc_si128.html).
 
 Besides the original 5-round Haraka functions (with 256 and 512 bits of input), extensions to 6 rounds are provided.
 This is to target collision resistance, contrary to the 5-round versions that only provide preimage resistance.
