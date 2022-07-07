@@ -1,3 +1,9 @@
+#[cfg(target_arch = "x86")]
+use std::arch::x86::{
+    __m128i, _mm_aesenc_si128, _mm_loadu_si128, _mm_storeu_si128, _mm_unpackhi_epi32,
+    _mm_unpacklo_epi32, _mm_xor_si128,
+};
+#[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::{
     __m128i, _mm_aesenc_si128, _mm_loadu_si128, _mm_storeu_si128, _mm_unpackhi_epi32,
     _mm_unpacklo_epi32, _mm_xor_si128,

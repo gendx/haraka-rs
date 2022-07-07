@@ -2,6 +2,11 @@ on: [push, pull_request]
 name: Build benches on nightly toolchain
 jobs:
   build_benchmarks:
+    strategy:
+      matrix:
+        arch:
+          - i686
+          - x86_64
     runs-on: ubuntu-latest
     env:
       RUSTFLAGS: "-C target-feature=+sse2,+aes -D warnings"
@@ -11,6 +16,7 @@ jobs:
         with:
           profile: minimal
           toolchain: nightly
+          target: ${{ matrix.arch }}-unknown-linux-gnu
           override: true
 
       - name: Build benches
