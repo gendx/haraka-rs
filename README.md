@@ -1,4 +1,7 @@
-# haraka-rs [![Build Status](https://travis-ci.org/gendx/haraka-rs.svg?branch=master)](https://travis-ci.org/gendx/haraka-rs)
+# haraka-rs
+
+![Build Status](https://github.com/gendx/haraka-rs/workflows/Build/badge.svg)
+![Test Status](https://github.com/gendx/haraka-rs/workflows/Tests/badge.svg)
 
 A Rust implementation of the [Haraka](https://github.com/kste/haraka) (v2) short-input hash function.
 
