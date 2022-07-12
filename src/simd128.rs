@@ -1,3 +1,8 @@
+#[cfg(target_arch = "aarch64")]
+use core::arch::aarch64::{
+    uint8x16_t, vaeseq_u8, vaesmcq_u8, vdupq_n_u8, veorq_u8, vld1q_u8, vreinterpretq_u32_u8,
+    vreinterpretq_u8_u32, vst1q_u8, vzip1q_u32, vzip2q_u32,
+};
 #[cfg(target_arch = "x86")]
 use std::arch::x86::{
     __m128i, _mm_aesenc_si128, _mm_loadu_si128, _mm_storeu_si128, _mm_unpackhi_epi32,
@@ -10,9 +15,11 @@ use std::arch::x86_64::{
 };
 use std::mem::transmute;
 
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 #[derive(Clone, Copy)]
 pub(crate) struct Simd128(__m128i);
 
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 impl Simd128 {
     pub const fn from(x: u128) -> Self {
         Self(unsafe { transmute(x) })
@@ -73,6 +80,84 @@ impl Simd128 {
     pub(crate) fn unpackhi_epi32(dst: &mut Self, src: &Self) {
         unsafe {
             dst.0 = _mm_unpackhi_epi32(dst.0, src.0);
+        }
+    }
+}
+
+#[cfg(target_arch = "aarch64")]
+#[derive(Clone, Copy)]
+pub(crate) struct Simd128(uint8x16_t);
+
+#[cfg(target_arch = "aarch64")]
+impl Simd128 {
+    pub const fn from(x: u128) -> Self {
+        Self(unsafe { transmute(x) })
+    }
+
+    #[inline(always)]
+    fn split(&self) -> (u64, u64) {
+        unsafe { transmute(self.0) }
+    }
+
+    #[inline(always)]
+    pub fn low(&self) -> u64 {
+        self.split().0
+    }
+
+    #[inline(always)]
+    pub fn high(&self) -> u64 {
+        self.split().1
+    }
+
+    /// Read from array pointer (potentially unaligned)
+    #[inline(always)]
+    pub fn read(src: &[u8; 16]) -> Self {
+        let x = unsafe { vld1q_u8(src.as_ptr() as *const _ as *const u8) };
+        Self(x)
+    }
+
+    /// Write into array pointer (potentially unaligned)
+    #[inline(always)]
+    pub fn write(self, dst: &mut [u8; 16]) {
+        unsafe {
+            vst1q_u8(dst.as_mut_ptr() as *mut _ as *mut u8, self.0);
+        }
+    }
+
+    #[inline(always)]
+    pub(crate) fn aesenc(block: &mut Self, key: &Self) {
+        unsafe {
+            let zero = vdupq_n_u8(0);
+            let x = vaeseq_u8(block.0, zero);
+            let y = vaesmcq_u8(x);
+            block.0 = veorq_u8(y, key.0);
+        }
+    }
+
+    #[inline(always)]
+    pub(crate) fn pxor(dst: &mut Self, src: &Self) {
+        unsafe {
+            dst.0 = veorq_u8(dst.0, src.0);
+        }
+    }
+
+    #[inline(always)]
+    pub(crate) fn unpacklo_epi32(dst: &mut Self, src: &Self) {
+        unsafe {
+            let a = vreinterpretq_u32_u8(dst.0);
+            let b = vreinterpretq_u32_u8(src.0);
+            let x = vzip1q_u32(a, b);
+            dst.0 = vreinterpretq_u8_u32(x);
+        }
+    }
+
+    #[inline(always)]
+    pub(crate) fn unpackhi_epi32(dst: &mut Self, src: &Self) {
+        unsafe {
+            let a = vreinterpretq_u32_u8(dst.0);
+            let b = vreinterpretq_u32_u8(src.0);
+            let x = vzip2q_u32(a, b);
+            dst.0 = vreinterpretq_u8_u32(x);
         }
     }
 }
