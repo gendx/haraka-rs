@@ -1,7 +1,7 @@
 on: [push, pull_request]
-name: Lints on nightly toolchain
+name: Lints
 jobs:
-  lints:
+  clippy:
     strategy:
       matrix:
         target:
