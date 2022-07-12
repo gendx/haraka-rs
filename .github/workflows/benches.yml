@@ -1,5 +1,5 @@
 on: [push, pull_request]
-name: Build benches on nightly toolchain
+name: Benchmarks
 jobs:
   build_benchmarks:
     strategy:
@@ -24,3 +24,21 @@ jobs:
         with:
           command: build
           args: --benches --verbose
+
+  benchmark:
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "-C target-cpu=native -D warnings"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+
+      - name: Run benchmarks
+        uses: actions-rs/cargo@v1
+        with:
+          command: bench
+          args: --verbose
