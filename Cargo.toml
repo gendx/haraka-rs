@@ -5,5 +5,4 @@ authors = ["G. Endignoux <ggendx@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-arrayref = "0.3.4"
-byteorder = "1.1.0"
+arrayref = "0.3.6"
