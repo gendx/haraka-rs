@@ -245,11 +245,17 @@ mod tests {
         assert_eq!(&dst, expect);
     }
 
+    use std::hint::black_box;
     use test::Bencher;
+
+    fn haraka512_through<const N_ROUNDS: usize>(src: &[u8; 64]) -> [u8; 32] {
+        let mut dst = [0; 32];
+        haraka512::<N_ROUNDS>(&mut dst, src);
+        dst
+    }
 
     #[bench]
     fn bench_haraka512_5round(b: &mut Bencher) {
-        let mut dst = [0; 32];
         let src = b"\x00\x01\x02\x03\x04\x05\x06\x07\
                     \x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\
                     \x10\x11\x12\x13\x14\x15\x16\x17\
@@ -258,12 +264,11 @@ mod tests {
                     \x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\
                     \x30\x31\x32\x33\x34\x35\x36\x37\
                     \x38\x39\x3a\x3b\x3c\x3d\x3e\x3f";
-        b.iter(|| haraka512::<5>(&mut dst, &src));
+        b.iter(|| haraka512_through::<5>(black_box(&src)));
     }
 
     #[bench]
     fn bench_haraka512_6round(b: &mut Bencher) {
-        let mut dst = [0; 32];
         let src = b"\x00\x01\x02\x03\x04\x05\x06\x07\
                     \x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\
                     \x10\x11\x12\x13\x14\x15\x16\x17\
@@ -272,6 +277,6 @@ mod tests {
                     \x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\
                     \x30\x31\x32\x33\x34\x35\x36\x37\
                     \x38\x39\x3a\x3b\x3c\x3d\x3e\x3f";
-        b.iter(|| haraka512::<6>(&mut dst, &src));
+        b.iter(|| haraka512_through::<6>(black_box(&src)));
     }
 }
