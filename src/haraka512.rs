@@ -39,10 +39,8 @@ fn aes_mix4(s0: &mut Simd128, s1: &mut Simd128, s2: &mut Simd128, s3: &mut Simd1
 
 #[inline(always)]
 fn truncstore(dst: &mut [u8; 32], s0: &Simd128, s1: &Simd128, s2: &Simd128, s3: &Simd128) {
-    *array_mut_ref![dst, 0, 8] = s0.high().to_le_bytes();
-    *array_mut_ref![dst, 8, 8] = s1.high().to_le_bytes();
-    *array_mut_ref![dst, 16, 8] = s2.low().to_le_bytes();
-    *array_mut_ref![dst, 24, 8] = s3.low().to_le_bytes();
+    Simd128::unpackhi_epi64(s0, s1).write(array_mut_ref![dst, 0, 16]);
+    Simd128::unpacklo_epi64(s2, s3).write(array_mut_ref![dst, 16, 16]);
 }
 
 pub fn haraka512<const N_ROUNDS: usize>(dst: &mut [u8; 32], src: &[u8; 64]) {

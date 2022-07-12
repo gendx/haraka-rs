@@ -1,7 +1,8 @@
 #[cfg(target_arch = "aarch64")]
 use core::arch::aarch64::{
     uint8x16_t, vaeseq_u8, vaesmcq_u8, vdupq_n_u8, veorq_u8, vld1q_u8, vreinterpretq_u32_u8,
-    vreinterpretq_u8_u32, vst1q_u8, vzip1q_u32, vzip2q_u32,
+    vreinterpretq_u64_u8, vreinterpretq_u8_u32, vreinterpretq_u8_u64, vst1q_u8, vzip1q_u32,
+    vzip1q_u64, vzip2q_u32, vzip2q_u64,
 };
 #[cfg(target_arch = "arm")]
 use core::arch::arm::{
@@ -11,12 +12,12 @@ use core::arch::arm::{
 #[cfg(target_arch = "x86")]
 use std::arch::x86::{
     __m128i, _mm_aesenc_si128, _mm_loadu_si128, _mm_storeu_si128, _mm_unpackhi_epi32,
-    _mm_unpacklo_epi32, _mm_xor_si128,
+    _mm_unpackhi_epi64, _mm_unpacklo_epi32, _mm_unpacklo_epi64, _mm_xor_si128,
 };
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::{
     __m128i, _mm_aesenc_si128, _mm_loadu_si128, _mm_storeu_si128, _mm_unpackhi_epi32,
-    _mm_unpacklo_epi32, _mm_xor_si128,
+    _mm_unpackhi_epi64, _mm_unpacklo_epi32, _mm_unpacklo_epi64, _mm_xor_si128,
 };
 use std::mem::transmute;
 
@@ -28,21 +29,6 @@ pub(crate) struct Simd128(__m128i);
 impl Simd128 {
     pub const fn from(x: u128) -> Self {
         Self(unsafe { transmute(x) })
-    }
-
-    #[inline(always)]
-    fn split(&self) -> (u64, u64) {
-        unsafe { transmute(self.0) }
-    }
-
-    #[inline(always)]
-    pub fn low(&self) -> u64 {
-        self.split().0
-    }
-
-    #[inline(always)]
-    pub fn high(&self) -> u64 {
-        self.split().1
     }
 
     /// Read from array pointer (potentially unaligned)
@@ -87,6 +73,16 @@ impl Simd128 {
             dst.0 = _mm_unpackhi_epi32(dst.0, src.0);
         }
     }
+
+    #[inline(always)]
+    pub(crate) fn unpacklo_epi64(lhs: &Self, rhs: &Self) -> Self {
+        unsafe { Self(_mm_unpacklo_epi64(lhs.0, rhs.0)) }
+    }
+
+    #[inline(always)]
+    pub(crate) fn unpackhi_epi64(lhs: &Self, rhs: &Self) -> Self {
+        unsafe { Self(_mm_unpackhi_epi64(lhs.0, rhs.0)) }
+    }
 }
 
 #[cfg(any(target_arch = "arm", target_arch = "aarch64"))]
@@ -97,21 +93,6 @@ pub(crate) struct Simd128(uint8x16_t);
 impl Simd128 {
     pub const fn from(x: u128) -> Self {
         Self(unsafe { transmute(x) })
-    }
-
-    #[inline(always)]
-    fn split(&self) -> (u64, u64) {
-        unsafe { transmute(self.0) }
-    }
-
-    #[inline(always)]
-    pub fn low(&self) -> u64 {
-        self.split().0
-    }
-
-    #[inline(always)]
-    pub fn high(&self) -> u64 {
-        self.split().1
     }
 
     /// Read from array pointer (potentially unaligned)
@@ -171,6 +152,58 @@ impl Simd128 {
             #[cfg(target_arch = "aarch64")]
             let x = vzip2q_u32(a, b);
             dst.0 = vreinterpretq_u8_u32(x);
+        }
+    }
+
+    // TODO: vzip*q_u64 is missing from core::arch::arm.
+    #[cfg(target_arch = "arm")]
+    #[inline(always)]
+    pub(crate) fn unpacklo_epi64(lhs: &Self, rhs: &Self) -> Self {
+        unsafe {
+            let a = lhs.split().0;
+            let b = rhs.split().0;
+            let pair: (u64, u64) = (a, b);
+            Self(transmute(pair))
+        }
+    }
+
+    // TODO: vzip*q_u64 is missing from core::arch::arm.
+    #[cfg(target_arch = "arm")]
+    #[inline(always)]
+    pub(crate) fn unpackhi_epi64(lhs: &Self, rhs: &Self) -> Self {
+        unsafe {
+            let a = lhs.split().1;
+            let b = rhs.split().1;
+            let pair: (u64, u64) = (a, b);
+            Self(transmute(pair))
+        }
+    }
+
+    #[cfg(target_arch = "arm")]
+    #[inline(always)]
+    fn split(&self) -> (u64, u64) {
+        unsafe { transmute(self.0) }
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    #[inline(always)]
+    pub(crate) fn unpacklo_epi64(lhs: &Self, rhs: &Self) -> Self {
+        unsafe {
+            let a = vreinterpretq_u64_u8(lhs.0);
+            let b = vreinterpretq_u64_u8(rhs.0);
+            let x = vzip1q_u64(a, b);
+            Self(vreinterpretq_u8_u64(x))
+        }
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    #[inline(always)]
+    pub(crate) fn unpackhi_epi64(lhs: &Self, rhs: &Self) -> Self {
+        unsafe {
+            let a = vreinterpretq_u64_u8(lhs.0);
+            let b = vreinterpretq_u64_u8(rhs.0);
+            let x = vzip2q_u64(a, b);
+            Self(vreinterpretq_u8_u64(x))
         }
     }
 }
@@ -245,5 +278,45 @@ mod tests {
         let expect = [8, 9, 10, 11, 24, 25, 26, 27, 12, 13, 14, 15, 28, 29, 30, 31];
         unpackhi_epi32_slice(&mut dst, &src);
         assert_eq!(dst, expect);
+    }
+
+    fn unpacklo_epi64_slice(lhs: &[u8; 16], rhs: &[u8; 16]) -> [u8; 16] {
+        let lhs_xmm = Simd128::read(lhs);
+        let rhs_xmm = Simd128::read(rhs);
+        let result = Simd128::unpacklo_epi64(&lhs_xmm, &rhs_xmm);
+        let mut dst = [0; 16];
+        result.write(&mut dst);
+        dst
+    }
+
+    #[test]
+    fn test_unpacklo_epi64() {
+        let lhs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+        let rhs = [
+            16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+        ];
+        let expect = [0, 1, 2, 3, 4, 5, 6, 7, 16, 17, 18, 19, 20, 21, 22, 23];
+        let unpacked = unpacklo_epi64_slice(&lhs, &rhs);
+        assert_eq!(unpacked, expect);
+    }
+
+    fn unpackhi_epi64_slice(lhs: &[u8; 16], rhs: &[u8; 16]) -> [u8; 16] {
+        let lhs_xmm = Simd128::read(lhs);
+        let rhs_xmm = Simd128::read(rhs);
+        let result = Simd128::unpackhi_epi64(&lhs_xmm, &rhs_xmm);
+        let mut dst = [0; 16];
+        result.write(&mut dst);
+        dst
+    }
+
+    #[test]
+    fn test_unpackhi_epi64() {
+        let lhs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+        let rhs = [
+            16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+        ];
+        let expect = [8, 9, 10, 11, 12, 13, 14, 15, 24, 25, 26, 27, 28, 29, 30, 31];
+        let unpacked = unpackhi_epi64_slice(&lhs, &rhs);
+        assert_eq!(unpacked, expect);
     }
 }
