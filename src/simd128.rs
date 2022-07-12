@@ -3,6 +3,11 @@ use core::arch::aarch64::{
     uint8x16_t, vaeseq_u8, vaesmcq_u8, vdupq_n_u8, veorq_u8, vld1q_u8, vreinterpretq_u32_u8,
     vreinterpretq_u8_u32, vst1q_u8, vzip1q_u32, vzip2q_u32,
 };
+#[cfg(target_arch = "arm")]
+use core::arch::arm::{
+    uint8x16_t, vaeseq_u8, vaesmcq_u8, vdupq_n_u8, veorq_u8, vld1q_u8, vreinterpretq_u32_u8,
+    vreinterpretq_u8_u32, vst1q_u8, vzipq_u32,
+};
 #[cfg(target_arch = "x86")]
 use std::arch::x86::{
     __m128i, _mm_aesenc_si128, _mm_loadu_si128, _mm_storeu_si128, _mm_unpackhi_epi32,
@@ -84,11 +89,11 @@ impl Simd128 {
     }
 }
 
-#[cfg(target_arch = "aarch64")]
+#[cfg(any(target_arch = "arm", target_arch = "aarch64"))]
 #[derive(Clone, Copy)]
 pub(crate) struct Simd128(uint8x16_t);
 
-#[cfg(target_arch = "aarch64")]
+#[cfg(any(target_arch = "arm", target_arch = "aarch64"))]
 impl Simd128 {
     pub const fn from(x: u128) -> Self {
         Self(unsafe { transmute(x) })
@@ -146,6 +151,10 @@ impl Simd128 {
         unsafe {
             let a = vreinterpretq_u32_u8(dst.0);
             let b = vreinterpretq_u32_u8(src.0);
+            // TODO: vzip1q_u32 is missing from core::arch::arm.
+            #[cfg(target_arch = "arm")]
+            let x = vzipq_u32(a, b).0;
+            #[cfg(target_arch = "aarch64")]
             let x = vzip1q_u32(a, b);
             dst.0 = vreinterpretq_u8_u32(x);
         }
@@ -156,6 +165,10 @@ impl Simd128 {
         unsafe {
             let a = vreinterpretq_u32_u8(dst.0);
             let b = vreinterpretq_u32_u8(src.0);
+            // TODO: vzip2q_u32 is missing from core::arch::arm.
+            #[cfg(target_arch = "arm")]
+            let x = vzipq_u32(a, b).1;
+            #[cfg(target_arch = "aarch64")]
             let x = vzip2q_u32(a, b);
             dst.0 = vreinterpretq_u8_u32(x);
         }

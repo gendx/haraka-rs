@@ -1,5 +1,5 @@
 #![cfg_attr(test, feature(bench_black_box, test))]
-#![cfg_attr(target_arch = "aarch64", feature(stdsimd))]
+#![cfg_attr(any(target_arch = "arm", target_arch = "aarch64"), feature(stdsimd))]
 
 #[cfg(test)]
 extern crate test;
